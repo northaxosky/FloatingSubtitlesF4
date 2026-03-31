@@ -1,4 +1,5 @@
 set(SOURCES
+	include/GameVersion.h
 	include/Hooks.h
 	include/ImGui/FontStyles.h
 	include/ImGui/Renderer.h

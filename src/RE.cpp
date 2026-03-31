@@ -85,7 +85,7 @@ namespace RE
 	void BroadcastEvent(BSTValueEventSource<HUDSubtitleDisplayEvent>* a_this)
 	{
 		using func_t = decltype(&BroadcastEvent);
-		static REL::Relocation<func_t> func{ REL::ID(2229076) };
+		static REL::Relocation<func_t> func{ REL::ID(GameVersion::BroadcastEvent) };
 		return func(a_this);
 	}
 

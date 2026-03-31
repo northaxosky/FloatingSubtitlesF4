@@ -7,7 +7,33 @@
 
 #include "F4SE/F4SE.h"
 #include "RE/Fallout.h"
+
+#ifdef FALLOUT4_OG
+// REX::Singleton polyfill for pre-NG CommonLibF4
+namespace REX
+{
+	template <class T>
+	class Singleton
+	{
+	public:
+		static T* GetSingleton()
+		{
+			static T singleton;
+			return std::addressof(singleton);
+		}
+
+	protected:
+		Singleton() = default;
+		~Singleton() = default;
+		Singleton(const Singleton&) = delete;
+		Singleton(Singleton&&) = delete;
+		Singleton& operator=(const Singleton&) = delete;
+		Singleton& operator=(Singleton&&) = delete;
+	};
+}
+#else
 #include "REX/REX/Singleton.h"
+#endif
 
 #include <dxgi.h>
 #include <shared_mutex>
@@ -122,5 +148,6 @@ namespace stl
 	};
 }
 
+#include "GameVersion.h"
 #include "RE.h"
 #include "Version.h"

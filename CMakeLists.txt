@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.21)
 # ---- Options ----
 
 option(COPY_BUILD "Copy the build output to the Fallout 4 directory." TRUE)
+option(FALLOUT4_OG "Build for the original game version (1.10.163) instead of NG/AE." FALSE)
 
 # ---- Cache build vars ----
 
@@ -15,6 +16,13 @@ endmacro()
 set_from_environment(Fallout4Path)
 set_from_environment(VCPKG_ROOT)
 set_from_environment(CommonLibF4Path)
+
+if (FALLOUT4_OG)
+	set_from_environment(CommonLibF4OGPath)
+	if (DEFINED CommonLibF4OGPath AND NOT ${CommonLibF4OGPath} STREQUAL "")
+		set(CommonLibF4Path ${CommonLibF4OGPath})
+	endif ()
+endif ()
 
 if (DEFINED VCPKG_ROOT)
 	set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
@@ -120,6 +128,7 @@ target_compile_definitions(
 	${PROJECT_NAME}
 	PRIVATE
 		_UNICODE
+		$<$<BOOL:${FALLOUT4_OG}>:FALLOUT4_OG>
 )
 
 target_compile_definitions(

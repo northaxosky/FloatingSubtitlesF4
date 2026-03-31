@@ -105,7 +105,11 @@ RayCaster::Result RayCaster::GetResult(bool a_debugRay)
 
 		pickData.SetStartEnd(startPoint.camera, targetPoints[i]);
 
+#ifdef FALLOUT4_OG
+		auto object = cell->Pick(pickData);
+#else
 		auto object = RE::TES::GetSingleton()->Pick(pickData);
+#endif
 		auto owner = object ? RE::TESObjectREFR::FindReferenceFor3D(object) : nullptr;
 		if (owner == actor) {
 			result = true;

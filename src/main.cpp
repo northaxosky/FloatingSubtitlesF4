@@ -63,7 +63,11 @@ extern "C" DLLEXPORT constinit auto F4SEPlugin_Version = []() noexcept {
 	data.UsesSigScanning(false);
 	data.IsLayoutDependent(true);
 	data.HasNoStructUse(false);
+#ifdef FALLOUT4_OG
+	data.CompatibleVersions({ REL::Version(1, 10, 163, 0) });
+#else
 	data.CompatibleVersions({ F4SE::RUNTIME_LATEST });
+#endif
 
 	return data;
 }();
