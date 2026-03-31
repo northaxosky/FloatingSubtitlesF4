@@ -24,7 +24,8 @@ namespace RE
 
 	[[nodiscard]] inline static auto GetILStringMap() -> BSTHashMap<BSFixedString, StringFileInfo*>&
 	{
-		static REL::Relocation<BSTHashMap<BSFixedString, StringFileInfo*>*> map{ REL::ID{ 90497, 2661471 }, -0x8 };
+		static const REL::ID ilStringMapID{ std::initializer_list<std::uint64_t>{ 90497, 2661471 } };
+		static REL::Relocation<BSTHashMap<BSFixedString, StringFileInfo*>*> map{ ilStringMapID, -0x8 };
 		return *map;
 	}
 

@@ -65,7 +65,7 @@ namespace stl
 	template <class T>
 	void write_thunk_call(std::uintptr_t a_src)
 	{
-		auto& trampoline = REL::GetTrampoline();
+		auto& trampoline = F4SE::GetTrampoline();
 		T::func = trampoline.write_call<5>(a_src, T::thunk);
 	}
 
@@ -95,8 +95,8 @@ namespace stl
 		Patch p(a_src, BYTES);
 		p.ready();
 
-		auto& trampoline = REL::GetTrampoline();
-		trampoline.write_jmp<5>(a_src, T::thunk);
+		REL::Trampoline& trampoline = F4SE::GetTrampoline();
+		trampoline.write_jmp<5>(a_src, reinterpret_cast<std::uintptr_t>(T::thunk));
 
 		auto alloc = trampoline.allocate(p.getSize());
 		std::memcpy(alloc, p.getCode(), p.getSize());

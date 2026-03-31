@@ -63,7 +63,11 @@ namespace ImGui
 
 	void FontStyles::Register()
 	{
-		RE::ApplyColorUpdateEvent::GetEventSource()->RegisterSink(this);
+		if (REL::Module::IsRuntimeNG()) {
+			RE::ApplyColorUpdateEvent::GetEventSource()->RegisterSink(this);
+		} else {
+			logger::info("OG: skipping ApplyColorUpdateEvent (using default subtitle colors)");
+		}
 	}
 
 	void FontStyles::LoadFontStyles()

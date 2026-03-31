@@ -37,12 +37,22 @@ void Manager::LoadGlobalSettings()
 
 void Manager::OnDataLoaded()
 {
+	logger::info("  RegisterSink MenuOpenCloseEvent...");
 	RE::UI::GetSingleton()->RegisterSink<RE::MenuOpenCloseEvent>(this);
-	RE::PlayerCrosshairModeEvent::GetEventSource()->RegisterSink(this);
+	if (REL::Module::IsRuntimeNG()) {
+		RE::PlayerCrosshairModeEvent::GetEventSource()->RegisterSink(this);
+	}
+	logger::info("  RegisterSink TESLoadGameEvent...");
 	RE::TESLoadGameEvent::GetEventSource()->RegisterSink(this);
 
-	localizedSubs.BuildLocalizedSubtitles();
+	if (REL::Module::IsRuntimeNG()) {
+		logger::info("  BuildLocalizedSubtitles...");
+		localizedSubs.BuildLocalizedSubtitles();
+	} else {
+		logger::info("  OG: skipping localized subtitles (ILStringMap not verified)");
+	}
 
+	logger::info("  LoadGlobalSettings...");
 	LoadGlobalSettings();
 
 	float gameMaxDistance = 3000.0f;
@@ -52,7 +62,7 @@ void Manager::OnDataLoaded()
 	maxDistanceStartSq = gameMaxDistance * gameMaxDistance;
 	maxDistanceEndSq = (gameMaxDistance * 1.05f) * (gameMaxDistance * 1.05f);
 
-	logger::info("Max subtitle distance: {:.2f} (start), {:.2f} (end)", gameMaxDistance, gameMaxDistance * 1.05f);
+	logger::info("  OnDataLoaded complete. Max distance: {:.2f}", gameMaxDistance);
 }
 
 bool Manager::SkipRender() const

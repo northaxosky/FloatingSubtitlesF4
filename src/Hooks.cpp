@@ -8,8 +8,14 @@ namespace Hooks
 	{
 		static void thunk(RE::SubtitleManager* a_manager, RE::TESObjectREFR* speaker, const RE::BSFixedStringCS& subtitleText, RE::TESTopicInfo* topicInfo, bool spokenToPlayer)
 		{
-			func(a_manager, speaker, subtitleText, topicInfo, spokenToPlayer);
+			static bool logged = false;
+			if (!logged) {
+				logger::info("ShowSubtitle hook fired: manager={}, speaker={}, text={}",
+					(void*)a_manager, (void*)speaker, subtitleText.c_str() ? subtitleText.c_str() : "null");
+				logged = true;
+			}
 
+			func(a_manager, speaker, subtitleText, topicInfo, spokenToPlayer);
 			Manager::GetSingleton()->AddSubtitle(a_manager, subtitleText.c_str());
 		}
 		static inline REL::Relocation<decltype(thunk)> func;
@@ -19,6 +25,12 @@ namespace Hooks
 	{
 		static bool thunk(RE::SubtitleManager* a_manager)
 		{
+			static bool logged = false;
+			if (!logged) {
+				logger::info("DisplayNextSubtitle hook fired: manager={}", (void*)a_manager);
+				logged = true;
+			}
+
 			return Manager::GetSingleton()->UpdateSubtitleInfo(a_manager);
 		}
 		static inline REL::Relocation<decltype(thunk)> func;
