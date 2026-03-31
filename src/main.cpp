@@ -22,13 +22,25 @@ void OnInit(F4SE::MessagingInterface::Message* a_msg)
 		{
 			logger::info("{:*^30}", "GAME DATA READY");
 			ImGui::Renderer::Init();
+			logger::info("FontStyles::Register...");
 			ImGui::FontStyles::GetSingleton()->Register();
+			logger::info("Manager::OnDataLoaded...");
 			Manager::GetSingleton()->OnDataLoaded();
+			logger::info("GAME DATA READY complete");
 		}
 		break;
 	default:
 		break;
 	}
+}
+
+// OG F4SE uses F4SEPlugin_Query, NG uses F4SEPlugin_Version. Export both.
+extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a_f4se, F4SE::PluginInfo* a_info)
+{
+	a_info->infoVersion = F4SE::PluginInfo::kVersion;
+	a_info->name = Version::PROJECT.data();
+	a_info->version = Version::MAJOR;
+	return true;
 }
 
 extern "C" DLLEXPORT constinit auto F4SEPlugin_Version = []() noexcept {
@@ -41,7 +53,7 @@ extern "C" DLLEXPORT constinit auto F4SEPlugin_Version = []() noexcept {
 	data.UsesSigScanning(false);
 	data.IsLayoutDependent(true);
 	data.HasNoStructUse(false);
-	data.CompatibleVersions({ F4SE::RUNTIME_LATEST });
+	data.CompatibleVersions({ F4SE::RUNTIME_1_10_163, F4SE::RUNTIME_LATEST });
 
 	return data;
 }();
