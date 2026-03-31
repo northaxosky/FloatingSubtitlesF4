@@ -8,33 +8,6 @@
 #include "F4SE/F4SE.h"
 #include "RE/Fallout.h"
 
-#ifdef FALLOUT4_OG
-// REX::Singleton polyfill for pre-NG CommonLibF4
-namespace REX
-{
-	template <class T>
-	class Singleton
-	{
-	public:
-		static T* GetSingleton()
-		{
-			static T singleton;
-			return std::addressof(singleton);
-		}
-
-	protected:
-		Singleton() = default;
-		~Singleton() = default;
-		Singleton(const Singleton&) = delete;
-		Singleton(Singleton&&) = delete;
-		Singleton& operator=(const Singleton&) = delete;
-		Singleton& operator=(Singleton&&) = delete;
-	};
-}
-#else
-#include "REX/REX/Singleton.h"
-#endif
-
 #include <dxgi.h>
 #include <shared_mutex>
 #include <shlobj.h>
@@ -45,6 +18,7 @@ namespace REX
 
 #include <boost_unordered.hpp>
 #include <freetype/freetype.h>
+#include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <srell.hpp>
 #include <xbyak/xbyak.h>
@@ -61,9 +35,8 @@ namespace REX
 using namespace std::literals;
 using namespace clib_util;
 using namespace string::literals;
-using namespace RE::literals;
 
-namespace logger = F4SE::log;
+namespace logger = spdlog;
 
 template <class K, class D, class H = boost::hash<K>, class KEqual = std::equal_to<K>>
 using FlatMap = boost::unordered_flat_map<K, D, H, KEqual>;
@@ -89,12 +62,10 @@ namespace RE
 
 namespace stl
 {
-	using namespace F4SE::stl;
-
 	template <class T>
 	void write_thunk_call(std::uintptr_t a_src)
 	{
-		auto& trampoline = F4SE::GetTrampoline();
+		auto& trampoline = REL::GetTrampoline();
 		T::func = trampoline.write_call<5>(a_src, T::thunk);
 	}
 
@@ -112,7 +83,6 @@ namespace stl
 		{
 			Patch(std::uintptr_t a_originalFuncAddr, std::size_t a_originalByteLength)
 			{
-				// Hook returns here. Execute the restored bytes and jump back to the original function.
 				for (size_t i = 0; i < a_originalByteLength; ++i) {
 					db(*reinterpret_cast<std::uint8_t*>(a_originalFuncAddr + i));
 				}
@@ -125,8 +95,8 @@ namespace stl
 		Patch p(a_src, BYTES);
 		p.ready();
 
-		auto& trampoline = F4SE::GetTrampoline();
-		trampoline.write_branch<5>(a_src, T::thunk);
+		auto& trampoline = REL::GetTrampoline();
+		trampoline.write_jmp<5>(a_src, T::thunk);
 
 		auto alloc = trampoline.allocate(p.getSize());
 		std::memcpy(alloc, p.getCode(), p.getSize());
@@ -148,6 +118,5 @@ namespace stl
 	};
 }
 
-#include "GameVersion.h"
 #include "RE.h"
 #include "Version.h"

@@ -2,21 +2,51 @@
 
 #include "ImGui/Util.h"
 
+// Stub definitions for hkBaseObject virtuals (declared in game headers, defined in game binary).
+// Safe because RayCollector is stack-allocated and overrides both.
+RE::hkBaseObject::~hkBaseObject() = default;
+void RE::hkBaseObject::__first_virtual_table_function__() {}
+
 RayCollector::RayCollector(RE::Actor* a_actor, RE::hknpBSWorld* a_physicsWorld) :
-	hknpClosestHitCollector(),
+	hknpCollisionQueryCollector(),
 	actor(a_actor),
 	physicsWorld(a_physicsWorld)
-{}
+{
+	Reset();
+}
+
+void RayCollector::Reset()
+{
+	hasValidHit = false;
+	earlyOutThreshold.real = _mm_set1_ps(1.0f);
+}
+
+bool RayCollector::HasHit() const
+{
+	return hasValidHit;
+}
+
+std::int32_t RayCollector::GetNumHits() const
+{
+	return hasValidHit ? 1 : 0;
+}
+
+const RE::hknpCollisionResult* RayCollector::GetHits() const
+{
+	return hasValidHit ? &closestHit : nullptr;
+}
 
 void RayCollector::AddHit(const RE::hknpCollisionResult& a_result)
 {
-	auto colLayer = a_result.hitBodyInfo.shapeCollisionFilterInfo->GetCollisionLayer();
+	auto colLayer = a_result.hitBodyInfo.shapeCollisionFilterInfo.storage.GetCollisionLayer();
 
 	switch (colLayer) {
 	case RE::COL_LAYER::kStatic:
 	case RE::COL_LAYER::kTerrain:
 	case RE::COL_LAYER::kGround:
-		hknpClosestHitCollector::AddHit(a_result);
+		closestHit = a_result;
+		hasValidHit = true;
+		earlyOutThreshold.real = _mm_set1_ps(a_result.fraction.storage);
 		break;
 	case RE::COL_LAYER::kBiped:
 	case RE::COL_LAYER::kBipedNoCC:
@@ -25,13 +55,16 @@ void RayCollector::AddHit(const RE::hknpCollisionResult& a_result)
 		{
 			RE::TESObjectREFR* owner = nullptr;
 			if (physicsWorld) {
-				if (auto body = RE::bhkNPCollisionObject::Getbhk(physicsWorld, a_result.hitBodyInfo.bodyId)) {
+				auto bodyId = a_result.hitBodyInfo.bodyId;
+				if (auto body = RE::bhkNPCollisionObject::Getbhk(reinterpret_cast<RE::bhkWorld*>(physicsWorld), bodyId)) {
 					owner = RE::TESObjectREFR::FindReferenceFor3D(body->sceneObject);
 				}
 			}
 
 			if (owner == actor) {
-				hknpClosestHitCollector::AddHit(a_result);
+				closestHit = a_result;
+				hasValidHit = true;
+				earlyOutThreshold.real = _mm_set1_ps(a_result.fraction.storage);
 			}
 		}
 		break;
@@ -85,7 +118,7 @@ RayCaster::Result RayCaster::GetResult(bool a_debugRay)
 
 	targetPoints[0] = actor->CalculateLOSLocation(RE::ACTOR_LOS_LOCATION::kEye);
 	targetPoints[1] = actor->CalculateLOSLocation(RE::ACTOR_LOS_LOCATION::kHead);
-	targetPoints[2] = actor->CalculateLOSLocation(RE::ACTOR_LOS_LOCATION::kTorso);
+	targetPoints[2] = actor->CalculateLOSLocation(RE::ACTOR_LOS_LOCATION::kTorse);
 	targetPoints[3] = actor->CalculateLOSLocation(RE::ACTOR_LOS_LOCATION::kFeet);
 
 	RE::bhkPickData pickData{};
@@ -93,8 +126,9 @@ RayCaster::Result RayCaster::GetResult(bool a_debugRay)
 	RayCollector collector(actor, bhkWorld->worldNP.ptr);
 	pickData.collector = &collector;
 	pickData.collectorType = static_cast<RE::bhkPickData::COLLECTOR_TYPE>(1);
-	pickData.castQuery.filterData.collisionFilterInfo->SetCollisionLayer(RE::COL_LAYER::kLOS);
-	//pickData.castQuery.filterData.collisionFilterInfo->SetSystemGroup(RE::PlayerCharacter::GetSingleton()->GetCurrentCollisionGroup());
+	RE::CFilter losFilter;
+	losFilter.SetCollisionLayer(RE::COL_LAYER::kLOS);
+	pickData.castQuery.filterData.collisionFilterInfo.storage = losFilter.filter;
 
 	bool result = false;
 
@@ -105,11 +139,7 @@ RayCaster::Result RayCaster::GetResult(bool a_debugRay)
 
 		pickData.SetStartEnd(startPoint.camera, targetPoints[i]);
 
-#ifdef FALLOUT4_OG
 		auto object = cell->Pick(pickData);
-#else
-		auto object = RE::TES::GetSingleton()->Pick(pickData);
-#endif
 		auto owner = object ? RE::TESObjectREFR::FindReferenceFor3D(object) : nullptr;
 		if (owner == actor) {
 			result = true;
@@ -130,9 +160,8 @@ void RayCaster::DebugRay(const RE::bhkPickData& a_pickData, RE::NiAVObject* a_ob
 	ImGui::DrawLine(startPoint.debug, hitPos, a_pickData.HasHit() ? color : IM_COL32_BLACK);
 
 	if (a_obj) {
-		auto text = std::format("[{}]",
-			a_pickData.HasHit() ? a_pickData.result.hitBodyInfo.shapeCollisionFilterInfo->GetCollisionLayer() : RE::COL_LAYER::kUnidentified);
-
+		auto layer = a_pickData.result.hitBodyInfo.shapeCollisionFilterInfo.storage.GetCollisionLayer();
+		auto text = std::format("[{}]", static_cast<std::uint32_t>(a_pickData.HasHit() ? layer : RE::COL_LAYER::kUnidentified));
 		ImGui::DrawTextAtPoint(hitPos, text.c_str(), color);
 	}
 }

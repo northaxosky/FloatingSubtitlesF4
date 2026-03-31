@@ -26,18 +26,11 @@ namespace Hooks
 
 	void Install()
 	{
-		REL::Relocation<std::uintptr_t> showSubtitle(REL::ID(GameVersion::ShowSubtitle));
+		REL::Relocation<std::uintptr_t> showSubtitle(REL::ID{ 875508, 2249542 });
 		stl::hook_function_prologue<ShowSubtitle, 5>(showSubtitle.address());
 
-#ifdef FALLOUT4_OG
-		// OG: hook DisplayNextSubtitle directly via prologue hook
-		REL::Relocation<std::uintptr_t> displayNext(REL::ID(GameVersion::DisplayNextSubtitle));
-		stl::hook_function_prologue<DisplayNextSubtitle, 5>(displayNext.address());
-#else
-		// NG: hook the CALL to DisplayNextSubtitle within UpdateSubtitles
-		REL::Relocation<std::uintptr_t> subtitleUpdate(REL::ID(GameVersion::DisplayNextSubtitle));
-		stl::write_thunk_call<DisplayNextSubtitle>(subtitleUpdate.address() + GameVersion::DisplayNextSubtitleOffset);
-#endif
+		REL::Relocation<std::uintptr_t> subtitleUpdate(REL::ID{ 381778, 2249545 });
+		stl::write_thunk_call<DisplayNextSubtitle>(subtitleUpdate.address() + (REL::Module::IsRuntimeNG() ? 0xA3 : 0x3A));
 
 		logger::info("Installed subtitle hooks");
 	}

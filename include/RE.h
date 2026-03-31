@@ -24,7 +24,7 @@ namespace RE
 
 	[[nodiscard]] inline static auto GetILStringMap() -> BSTHashMap<BSFixedString, StringFileInfo*>&
 	{
-		static REL::Relocation<BSTHashMap<BSFixedString, StringFileInfo*>*> map{ REL::ID(GameVersion::ILStringMap), GameVersion::ILStringMapOffset };
+		static REL::Relocation<BSTHashMap<BSFixedString, StringFileInfo*>*> map{ REL::ID{ 90497, 2661471 }, -0x8 };
 		return *map;
 	}
 

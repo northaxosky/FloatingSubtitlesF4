@@ -58,30 +58,12 @@
         "vs2022",
         "f4"
       ]
-    },
-    {
-      "name": "vs2022-windows-vcpkg-f4-og",
-      "inherits": [
-        "cmake-dev",
-        "vcpkg",
-        "windows",
-        "vs2022",
-        "f4"
-      ],
-      "cacheVariables": {
-        "FALLOUT4_OG": "ON"
-      }
     }
   ],
   "buildPresets": [
     {
       "name": "vs2022-windows-vcpkg-f4",
       "configurePreset": "vs2022-windows-vcpkg-f4",
-      "configuration": "Release"
-    },
-    {
-      "name": "vs2022-windows-vcpkg-f4-og",
-      "configurePreset": "vs2022-windows-vcpkg-f4-og",
       "configuration": "Release"
     }
   ]

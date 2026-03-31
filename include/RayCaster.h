@@ -1,17 +1,26 @@
 #pragma once
 
-class RayCollector : public RE::hknpClosestHitCollector
+class RayCollector : public RE::hknpCollisionQueryCollector
 {
 public:
-	RayCollector() {}
+	RayCollector() { Reset(); }
 	RayCollector(RE::Actor* a_actor, RE::hknpBSWorld* a_physicsWorld);
-	
-	void AddHit(const RE::hknpCollisionResult& a_result) override;  // 01
+	~RayCollector() override = default;
+	void __first_virtual_table_function__() override {}
+
+	// override (hknpCollisionQueryCollector)
+	void                       Reset() override;
+	void                       AddHit(const RE::hknpCollisionResult& a_result) override;
+	bool                       HasHit() const override;
+	std::int32_t               GetNumHits() const override;
+	const RE::hknpCollisionResult* GetHits() const override;
 
 private:
 	// members
-	RE::Actor* actor;
-	RE::hknpBSWorld* physicsWorld;
+	RE::Actor*              actor{ nullptr };
+	RE::hknpBSWorld*        physicsWorld{ nullptr };
+	RE::hknpCollisionResult closestHit{};
+	bool                    hasValidHit{ false };
 };
 
 class RayCaster

@@ -44,12 +44,18 @@ namespace ImGui
 	}
 
 	RE::BSEventNotifyControl FontStyles::ProcessEvent(const RE::ApplyColorUpdateEvent&, RE::BSTEventSource<RE::ApplyColorUpdateEvent>*)
-	{		
+	{
 		hudGameplayColor = GetColor(RE::HUDMenuUtils::GetGameplayHUDColor());
-		
-		subtitleColor.x = "uSubtitleR:Interface"_ini.value() / 255.0f;
-		subtitleColor.y = "uSubtitleG:Interface"_ini.value() / 255.0f;
-		subtitleColor.z = "uSubtitleB:Interface"_ini.value() / 255.0f;
+
+		if (auto setting = RE::GetINISetting("uSubtitleR:Interface")) {
+			subtitleColor.x = static_cast<float>(setting->GetUInt()) / 255.0f;
+		}
+		if (auto setting = RE::GetINISetting("uSubtitleG:Interface")) {
+			subtitleColor.y = static_cast<float>(setting->GetUInt()) / 255.0f;
+		}
+		if (auto setting = RE::GetINISetting("uSubtitleB:Interface")) {
+			subtitleColor.z = static_cast<float>(setting->GetUInt()) / 255.0f;
+		}
 		subtitleColor.w = 1.0f;
 
 		return RE::BSEventNotifyControl::kContinue;

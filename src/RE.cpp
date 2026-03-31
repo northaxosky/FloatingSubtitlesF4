@@ -58,10 +58,10 @@ namespace RE
 		return static_cast<float>(quantized) / 16777215.0f;
 	}
 
-	bool IsCrosshairRef(const TESObjectREFRPtr& a_ref)
+	bool IsCrosshairRef([[maybe_unused]] const TESObjectREFRPtr& a_ref)
 	{
-		auto viewCaster = ViewCaster::GetSingleton();
-		return viewCaster && viewCaster->QActivatePickRef().get() == a_ref;
+		// ViewCaster is not available in Dear-Modding CommonLibF4
+		return false;
 	}
 
 	NiAVObject* GetHeadNode(const TESObjectREFRPtr& a_ref)
@@ -85,7 +85,7 @@ namespace RE
 	void BroadcastEvent(BSTValueEventSource<HUDSubtitleDisplayEvent>* a_this)
 	{
 		using func_t = decltype(&BroadcastEvent);
-		static REL::Relocation<func_t> func{ REL::ID(GameVersion::BroadcastEvent) };
+		static REL::Relocation<func_t> func{ REL::ID{ 328561, 2229076 } };
 		return func(a_this);
 	}
 

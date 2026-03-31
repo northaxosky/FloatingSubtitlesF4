@@ -45,7 +45,10 @@ void Manager::OnDataLoaded()
 
 	LoadGlobalSettings();
 
-	const auto gameMaxDistance = "fMaxSubtitleDistance:Interface"_ini.value();
+	float gameMaxDistance = 3000.0f;
+	if (auto setting = RE::GetINISetting("fMaxSubtitleDistance:Interface")) {
+		gameMaxDistance = setting->GetFloat();
+	}
 	maxDistanceStartSq = gameMaxDistance * gameMaxDistance;
 	maxDistanceEndSq = (gameMaxDistance * 1.05f) * (gameMaxDistance * 1.05f);
 
@@ -59,12 +62,18 @@ bool Manager::SkipRender() const
 
 bool Manager::ShowGeneralSubtitles() const
 {
-	return "bGeneralSubtitles:Interface"_pref.value();
+	if (auto setting = RE::INIPrefSettingCollection::GetSingleton()->GetSetting("bGeneralSubtitles:Interface")) {
+		return setting->GetBinary();
+	}
+	return true;
 }
 
 bool Manager::ShowDialogueSubtitles() const
 {
-	return "bDialogueSubtitles:Interface"_pref.value();
+	if (auto setting = RE::INIPrefSettingCollection::GetSingleton()->GetSetting("bDialogueSubtitles:Interface")) {
+		return setting->GetBinary();
+	}
+	return true;
 }
 
 DualSubtitle Manager::CreateDualSubtitles(const char* subtitle) const

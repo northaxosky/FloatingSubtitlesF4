@@ -7,7 +7,7 @@ namespace ImGui::Renderer
 {
 	void Init()
 	{
-		if (const auto renderer = RE::BSGraphics::RendererData::GetSingleton()) {
+		if (const auto renderer = RE::BSGraphics::GetRendererData()) {
 			const auto swapChain = (IDXGISwapChain*)renderer->renderWindow[0].swapChain;
 			if (!swapChain) {
 				logger::error("couldn't find swapChain");
