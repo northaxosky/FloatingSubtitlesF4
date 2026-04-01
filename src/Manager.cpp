@@ -252,29 +252,16 @@ bool Manager::UpdateSubtitleInfo(RE::SubtitleManager* a_manager)
 {
 	bool gameSubtitleFound = false;
 
-	static int logCount = 0;
-	bool doLog = logCount < 3;
-	auto L = [&](const char* msg) { if (doLog) { logger::info("  USI: {}", msg); spdlog::default_logger()->flush(); } };
-
-	L("1-start");
-	L("2-array-size");
-
 	{
 		auto& subtitleArray = reinterpret_cast<RE::BSTArray<RE::SubtitleInfoEx>&>(a_manager->subtitlePriorityArray);
-		L("3-cast-ok");
 
 		for (auto& subInfo : subtitleArray) {
-			L("4-loop-entry");
-			L("5-speaker-get");
 			if (const auto& ref = subInfo.speaker.get()) {
-				L("6-ref-ok");
-
 				if (!subInfo.isFlagSet(SubtitleFlag::kInitialized)) {
 					subInfo.flagsRaw() = 0;
 					subInfo.setAlphaModifier(1.0f);
 					subInfo.setFlag(SubtitleFlag::kInitialized, true);
 				}
-				L("7-init-done");
 
 				subInfo.setFlag(SubtitleFlag::kSkip, false);
 
@@ -282,10 +269,8 @@ bool Manager::UpdateSubtitleInfo(RE::SubtitleManager* a_manager)
 					subInfo.setFlag(SubtitleFlag::kSkip, true);
 					continue;
 				}
-				L("8-dist-check-done");
 
 				auto pcCamera = RE::PlayerCamera::GetSingleton();
-				L("9-camera-ok");
 				bool isActor = ref->IsActor();
 				bool isPlayer = ref->IsPlayerRef();
 
@@ -297,59 +282,43 @@ bool Manager::UpdateSubtitleInfo(RE::SubtitleManager* a_manager)
 					bool dlg = pcCamera->QCameraEquals(RE::CameraState::kDialogue);
 					skipSubtitle = (isPlayer && fp) || dlg;
 				}
-				L("9e-skip-eval");
 
 				if (skipSubtitle) {
 					subInfo.setFlag(SubtitleFlag::kSkip, true);
 				} else {
-					L("10-calc-vis");
 					CalculateVisibility(subInfo);
 				}
-				L("11-vis-done");
 
 				if (subInfo.isFlagSet(SubtitleFlag::kSkip) || subInfo.isFlagSet(SubtitleFlag::kOffscreen)) {
-					L("12-skip/offscreen");
 					if (!gameSubtitleFound) {
 						bool shouldDisplay = false;
 
-						L("13-menu-topic");
 						if (RE::MenuTopicManager::GetSingleton()->menuOpen) {
 							shouldDisplay = ShowDialogueSubtitles();
 						} else {
 							shouldDisplay = ShowGeneralSubtitles();
 						}
-						L("14-display-check");
 
 						if (shouldDisplay) {
-							L("15-get-speaker-name");
 							RE::HUDSubtitleDisplayData data(RE::GetSpeakerName(subInfo), GetScaleformSubtitle(subInfo.subtitleText));
-							L("16-data-created");
 							RE::BSAutoLock<RE::BSSpinLock> l(a_manager->subtitleDisplayData.dataLock);
-							L("17-locked");
 							{
 								if (!a_manager->subtitleDisplayData.optionalValue.has_value() || *a_manager->subtitleDisplayData.optionalValue != data) {
 									a_manager->subtitleDisplayData.optionalValue.emplace(data);
-									L("18-broadcast");
 									RE::BroadcastEvent(&a_manager->subtitleDisplayData);
 								}
 							}
-							L("19-broadcast-done");
 						}
 
 						a_manager->currentSpeaker = subInfo.speaker;
 						gameSubtitleFound = true;
 					}
 				} else {
-					L("20-alpha");
 					CalculateAlphaModifier(subInfo);
-					L("21-clear-scaleform");
 					ClearScaleformSubtitle(a_manager->subtitleDisplayData, GetScaleformSubtitle(subInfo.subtitleText));
 				}
-				L("22-entry-done");
 			}
 		}
-		L("23-loop-done");
-		logCount++;
 	}
 
 	return gameSubtitleFound;
