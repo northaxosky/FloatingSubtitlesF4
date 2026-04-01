@@ -1,44 +1,46 @@
-# OG (1.10.163) Port — Caveats & TODO
+# OG (1.10.163) Port — Status & TODO
 
-Features that are skipped or degraded on OG due to unresolved address IDs or API differences.
+## Working on OG
 
-## Skipped on OG
+### Floating subtitles
+Core subtitle rendering works. NPCs display floating text above their heads with proper word-wrapping and font styling.
 
-### 1. ApplyColorUpdateEvent (dynamic color sync)
-**File:** `src/ImGui/FontStyles.cpp` — `FontStyles::Register()`
-**Status:** Partially working. HUD color and subtitle colors load from INI at startup. They match game settings but won't update mid-session if the player changes HUD color without restarting.
-**Root cause:** `ApplyColorUpdateEvent::GetEventSource` crashes on OG when constructing the event source via `BSTGlobalEvent`. The event sink can't be registered, so dynamic updates don't fire. Also `HUDMenuUtils::GetGameplayHUDColor()` crashes on OG — HUD color is read from `iHUDColorR/G/B:Interface` INI settings instead.
-**To fix:** Debug `BSTGlobalEvent` event source creation on OG, or find an alternative hook point for color change notifications.
+### Line-of-sight / Raycasting
+Subtitles dim when NPC is behind a wall. Uses `bhkPickData` + custom `RayCollector` through `cell->Pick()`.
 
-### 2. PlayerCrosshairModeEvent (crosshair mode tracking)
-**File:** `src/Manager.cpp` — `Manager::OnDataLoaded()`
-**Impact:** Crosshair mode changes aren't tracked. Minor — only affects subtitle alpha when looking directly at an NPC.
-**Root cause:** Same `BSTGlobalEvent` event source pattern. OG ID candidates were 1549628 and 1362726 but both crash.
-**To fix:** Same approach as #1 — likely the same underlying `BSTGlobalEvent` issue.
+**Fixes applied:**
+- `bhkPickData::SetStartEnd` OG ID was wrong (55502 → 747470)
+- `bhkPickData::ctor` and `GetHitFraction` were missing OG IDs (added 526783, 476687)
+- Removed `__first_virtual_table_function__` override from `RayCollector` to fix vtable alignment
+- Camera start point uses `PlayerCamera` fallback (`Main::WorldRootNode` OG ID points to wrong data)
 
-### 3. ILStringMap / Localized Subtitles (dual-language)
-**File:** `src/Localization.cpp` — `ReadILStringFiles()` via `RE::GetILStringMap()`
-**Impact:** Dual-language subtitle display is disabled. Only the game's native language subtitles are shown.
-**Root cause:** `GetILStringMap()` uses OG ID 90497 with offset -0x8, resolved by tracing `StringFileInfo::ResolveID` data references. Crashes at runtime — the ID or offset may be wrong, or the `BSTHashMap` layout differs on OG.
-**To fix:** Use x64dbg on OG, break in `StringFileInfo::ResolveID` (OG RVA 0x1B7E70), inspect what address is loaded into RCX at +0x59. Compare with what ID 90497 resolves to. The offset -0x8 may need adjustment.
+### Camera state checks
+Subtitles properly hide during dialogue and first-person camera via `QCameraEquals`.
 
-### 4. ViewCaster / IsCrosshairRef
-**File:** `src/RE.cpp` — `IsCrosshairRef()`
-**Impact:** Always returns false. Crosshair-targeted NPC subtitle highlighting doesn't work.
-**Root cause:** `ViewCaster` class doesn't exist in Dear-Modding CommonLibF4. Needs full class RE with `QActivatePickRef()` method.
+**Fix applied:** `PlayerCamera::Singleton` OG ID was 0 (placeholder) — resolved to 1171980.
 
-## Unresolved IDs in CommonLibF4
+### HUD / subtitle colors
+Colors load from INI at startup (`iHUDColorR/G/B:Interface` for HUD, `uSubtitleR/G/B:Interface` for subtitles). Match game settings on launch.
 
-~65 entries in `commonlibf4/include/RE/IDs.h` remain NG-only (no OG equivalent). These are IDs that:
-- Had no MainList (OG→AE address) mapping
-- Had no matching byte signature in the decrypted OG binary
-- Were not found in the Ryan-rsm-McKenzie dev-1.10.163 branch
+## Limitations on OG
 
-Most are for code paths this mod doesn't touch. If one is hit at runtime, the game will show "Failed to find offset for Address Library ID" with the ID number. Resolution approach:
-1. Find the ID in `IDs.h`, note the namespace/name
-2. Search the OG function name database (`.local/Fallout4_IDA_OG_to_AE1-11-191_NamePort/fallout4_og_funcs.json`) for the function name
-3. Look up the OG RVA in the OG address library (`version-1-10-163-0.bin`)
-4. Add the OG ID to the entry: `{ og_id, ng_id }`
+### 1. No dynamic color updates
+**Impact:** HUD/subtitle colors won't update mid-session if changed in settings. Requires game restart.
+**Root cause:** `ApplyColorUpdateEvent::GetEventSource` crashes on OG via `BSTGlobalEvent`. `HUDMenuUtils::GetGameplayHUDColor()` also crashes — colors read from INI instead.
+**To fix:** Debug `BSTGlobalEvent` event source creation on OG, or find an alternative hook point.
+
+### 2. No dual-language subtitles
+**Impact:** Only the game's native language subtitles are shown.
+**Root cause:** `GetILStringMap()` (OG ID 90497, offset -0x8) crashes — the ID/offset may be wrong or `BSTHashMap` layout differs.
+**To fix:** Use x64dbg on OG, break in `StringFileInfo::ResolveID` (OG RVA 0x1B7E70), inspect RCX at +0x59.
+
+### 3. No crosshair mode tracking
+**Impact:** Minor — subtitle alpha doesn't change when looking directly at an NPC.
+**Root cause:** `PlayerCrosshairModeEvent` uses same `BSTGlobalEvent` pattern that crashes on OG.
+
+### 4. No crosshair ref highlighting
+**Impact:** Crosshair-targeted NPC subtitle highlighting doesn't work (`IsCrosshairRef` always returns false).
+**Root cause:** `ViewCaster` class doesn't exist in Dear-Modding CommonLibF4.
 
 ## CommonLibF4 Patches (in local clone)
 
@@ -50,3 +52,9 @@ These changes were made to `Documents/Projects/commonlibf4` and should be contri
 
 ### IDs.h — 800+ OG IDs added
 Resolved via address library cross-reference, MainList mapping, Ryan-rsm-McKenzie fork harvesting, and byte signature matching.
+
+Key fixes during this port:
+- `PlayerCamera::Singleton` — was 0, corrected to 1171980
+- `bhkPickData::SetStartEnd` — was 55502 (wrong function!), corrected to 747470
+- `bhkPickData::ctor` — was NG-only, added OG ID 526783
+- `bhkPickData::GetHitFraction` — was NG-only, added OG ID 476687
