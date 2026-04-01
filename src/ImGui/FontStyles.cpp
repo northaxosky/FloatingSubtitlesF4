@@ -63,10 +63,23 @@ namespace ImGui
 
 	void FontStyles::Register()
 	{
+		// Load colors once at init (works on both OG and NG)
+		hudGameplayColor = GetColor(RE::HUDMenuUtils::GetGameplayHUDColor());
+
+		if (auto setting = RE::GetINISetting("uSubtitleR:Interface")) {
+			subtitleColor.x = static_cast<float>(setting->GetUInt()) / 255.0f;
+		}
+		if (auto setting = RE::GetINISetting("uSubtitleG:Interface")) {
+			subtitleColor.y = static_cast<float>(setting->GetUInt()) / 255.0f;
+		}
+		if (auto setting = RE::GetINISetting("uSubtitleB:Interface")) {
+			subtitleColor.z = static_cast<float>(setting->GetUInt()) / 255.0f;
+		}
+		subtitleColor.w = 1.0f;
+
+		// NG: also register for dynamic updates when player changes HUD color
 		if (REL::Module::IsRuntimeNG()) {
 			RE::ApplyColorUpdateEvent::GetEventSource()->RegisterSink(this);
-		} else {
-			logger::info("OG: skipping ApplyColorUpdateEvent (using default subtitle colors)");
 		}
 	}
 
