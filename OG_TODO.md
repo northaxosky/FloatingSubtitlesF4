@@ -44,17 +44,4 @@ Colors load from INI at startup (`iHUDColorR/G/B:Interface` for HUD, `uSubtitleR
 
 ## CommonLibF4 Patches (in local clone)
 
-These changes were made to `Documents/Projects/commonlibf4` and should be contributed upstream:
-
-### F4SE API.cpp — OG F4SE compatibility
-- `GetSaveFolderName()` guarded by F4SE version check (OG F4SE 0.6.x doesn't have it)
-- `InitLog()` falls back to "Fallout4" save folder name when empty
-
-### IDs.h — 800+ OG IDs added
-Resolved via address library cross-reference, MainList mapping, Ryan-rsm-McKenzie fork harvesting, and byte signature matching.
-
-Key fixes during this port:
-- `PlayerCamera::Singleton` — was 0, corrected to 1171980
-- `bhkPickData::SetStartEnd` — was 55502 (wrong function!), corrected to 747470
-- `bhkPickData::ctor` — was NG-only, added OG ID 526783
-- `bhkPickData::GetHitFraction` — was NG-only, added OG ID 476687
+Will be contributing upstream
