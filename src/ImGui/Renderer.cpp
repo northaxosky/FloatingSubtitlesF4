@@ -7,7 +7,7 @@ namespace ImGui::Renderer
 {
 	void Init()
 	{
-		if (const auto renderer = RE::BSGraphics::RendererData::GetSingleton()) {
+		if (const auto renderer = RE::BSGraphics::GetRendererData()) {
 			const auto swapChain = (IDXGISwapChain*)renderer->renderWindow[0].swapChain;
 			if (!swapChain) {
 				logger::error("couldn't find swapChain");
@@ -56,7 +56,12 @@ namespace ImGui::Renderer
 	{
 		static void thunk(RE::IMenu* a_menu)
 		{
-			// Skip if Imgui is not loaded
+			static bool logged = false;
+			if (!logged) {
+				logger::info("PostDisplay first call, initialized={}", initialized.load());
+				logged = true;
+			}
+
 			if (!initialized.load() || Manager::GetSingleton()->SkipRender()) {
 				func(a_menu);
 				return;
@@ -66,9 +71,7 @@ namespace ImGui::Renderer
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
 			{
-				// disable windowing
 				GImGui->NavWindowingTarget = nullptr;
-
 				Manager::GetSingleton()->Draw();
 			}
 			ImGui::EndFrame();

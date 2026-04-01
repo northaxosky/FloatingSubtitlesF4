@@ -122,12 +122,6 @@ target_compile_definitions(
 		_UNICODE
 )
 
-target_compile_definitions(
-	CommonLibF4
-	PUBLIC
-		F4SE_SUPPORT_XBYAK
-)
-
 target_compile_features(
 	${PROJECT_NAME}
 	PRIVATE

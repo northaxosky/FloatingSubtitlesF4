@@ -92,7 +92,7 @@ void LocalizedSubtitles::ReadILStringFiles(MultiSubtitleToIDMap& a_multiSubToID,
 			std::string                  path = std::format("STRINGS\\{}_{}.ILSTRINGS", baseName, to_string(language));
 			RE::BSResourceNiBinaryStream stream(path.c_str());
 
-			if (!stream.good() || stream.stream->totalSize < 8) {
+			if (!stream || stream.stream->totalSize < 8) {
 				continue;
 			}
 
@@ -165,7 +165,11 @@ void LocalizedSubtitles::MergeDuplicateSubtitles(const MultiSubtitleToIDMap& a_m
 
 void LocalizedSubtitles::BuildLocalizedSubtitles()
 {
-	gameLanguage = to_language("sLanguage:General"_ini.value_or("EN"));
+	std::string_view langStr = "EN";
+	if (auto setting = RE::GetINISetting("sLanguage:General")) {
+		langStr = setting->GetString();
+	}
+	gameLanguage = to_language(langStr);
 
 	Timer timer;
 	timer.start();

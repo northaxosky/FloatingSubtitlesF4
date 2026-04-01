@@ -22,8 +22,11 @@ void OnInit(F4SE::MessagingInterface::Message* a_msg)
 		{
 			logger::info("{:*^30}", "GAME DATA READY");
 			ImGui::Renderer::Init();
+			logger::info("FontStyles::Register...");
 			ImGui::FontStyles::GetSingleton()->Register();
+			logger::info("Manager::OnDataLoaded...");
 			Manager::GetSingleton()->OnDataLoaded();
+			logger::info("GAME DATA READY complete");
 		}
 		break;
 	default:
@@ -31,26 +34,13 @@ void OnInit(F4SE::MessagingInterface::Message* a_msg)
 	}
 }
 
-void InitializeLog()
+// OG F4SE uses F4SEPlugin_Query, NG uses F4SEPlugin_Version. Export both.
+extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a_f4se, F4SE::PluginInfo* a_info)
 {
-	auto path = logger::log_directory();
-	if (!path) {
-		stl::report_and_fail("Failed to find standard logging directory"sv);
-	}
-
-	*path /= Version::PROJECT;
-	*path += ".log"sv;
-	auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
-
-	auto log = std::make_shared<spdlog::logger>("global log"s, std::move(sink));
-
-	log->set_level(spdlog::level::info);
-	log->flush_on(spdlog::level::info);
-
-	spdlog::set_default_logger(std::move(log));
-	spdlog::set_pattern("[%H:%M:%S:%e] %v"s);
-
-	logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
+	a_info->infoVersion = F4SE::PluginInfo::kVersion;
+	a_info->name = Version::PROJECT.data();
+	a_info->version = Version::MAJOR;
+	return true;
 }
 
 extern "C" DLLEXPORT constinit auto F4SEPlugin_Version = []() noexcept {
@@ -63,20 +53,17 @@ extern "C" DLLEXPORT constinit auto F4SEPlugin_Version = []() noexcept {
 	data.UsesSigScanning(false);
 	data.IsLayoutDependent(true);
 	data.HasNoStructUse(false);
-	data.CompatibleVersions({ F4SE::RUNTIME_LATEST });
+	data.CompatibleVersions({ F4SE::RUNTIME_1_10_163, F4SE::RUNTIME_LATEST });
 
 	return data;
 }();
 
 extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f4se)
 {
-	F4SE::Init(a_f4se, false);
+	F4SE::Init(a_f4se, { .trampoline = true, .trampolineSize = 1 << 7 });
 
-	InitializeLog();
-
+	logger::info("{} v{} loaded", Version::PROJECT, Version::NAME);
 	logger::info("Game version : {}", a_f4se->RuntimeVersion().string());
-
-	F4SE::AllocTrampoline(1 << 7);
 
 	const auto messaging = F4SE::GetMessagingInterface();
 	messaging->RegisterListener(OnInit);
