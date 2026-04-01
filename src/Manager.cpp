@@ -297,7 +297,7 @@ bool Manager::UpdateSubtitleInfo(RE::SubtitleManager* a_manager)
 				bool skipSubtitle = false;
 				if (!isActor) {
 					skipSubtitle = true;
-				} else if (REL::Module::IsRuntimeNG() && pcCamera) {
+				} else if (pcCamera) {
 					bool fp = pcCamera->QCameraEquals(RE::CameraState::kFirstPerson);
 					bool dlg = pcCamera->QCameraEquals(RE::CameraState::kDialogue);
 					skipSubtitle = (isPlayer && fp) || dlg;
