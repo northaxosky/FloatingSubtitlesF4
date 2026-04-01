@@ -6,7 +6,6 @@ public:
 	RayCollector() { Reset(); }
 	RayCollector(RE::Actor* a_actor, RE::hknpBSWorld* a_physicsWorld);
 	~RayCollector() override = default;
-	void __first_virtual_table_function__() override {}
 
 	// override (hknpCollisionQueryCollector)
 	void                       Reset() override;

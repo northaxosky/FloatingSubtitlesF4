@@ -211,11 +211,6 @@ void Manager::CalculateVisibility(RE::SubtitleInfoEx& a_subInfo)
 		return;
 	}
 
-	// OG: skip raycasting — Havok collision API differs, needs further work
-	if (REL::Module::IsRuntimeOG()) {
-		return;
-	}
-
 	switch (RayCaster(actor).GetResult(false)) {
 	case RayCaster::Result::kOffscreen:
 		a_subInfo.setFlag(SubtitleFlag::kOffscreen, true);
