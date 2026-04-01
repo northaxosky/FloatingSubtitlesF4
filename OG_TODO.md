@@ -4,11 +4,11 @@ Features that are skipped or degraded on OG due to unresolved address IDs or API
 
 ## Skipped on OG
 
-### 1. ApplyColorUpdateEvent (subtitle color sync)
+### 1. ApplyColorUpdateEvent (dynamic color sync)
 **File:** `src/ImGui/FontStyles.cpp` — `FontStyles::Register()`
-**Impact:** Subtitle colors won't update when the player changes HUD color in settings. Uses hardcoded default colors instead.
-**Root cause:** `ApplyColorUpdateEvent::GetEventSource` (OG ID 860383) resolves but crashes when constructing the event source via `BSTGlobalEvent::GetSingleton()`. The `BSTGlobalEvent` singleton ID (1424022) was added but the event source creation pattern may differ on OG.
-**To fix:** Debug at runtime with x64dbg — break at `ApplyColorUpdateEvent::GetEventSource`, step through the `new EventSource_t(...)` call, find why it crashes.
+**Status:** Partially working. HUD color and subtitle colors load from INI at startup. They match game settings but won't update mid-session if the player changes HUD color without restarting.
+**Root cause:** `ApplyColorUpdateEvent::GetEventSource` crashes on OG when constructing the event source via `BSTGlobalEvent`. The event sink can't be registered, so dynamic updates don't fire. Also `HUDMenuUtils::GetGameplayHUDColor()` crashes on OG — HUD color is read from `iHUDColorR/G/B:Interface` INI settings instead.
+**To fix:** Debug `BSTGlobalEvent` event source creation on OG, or find an alternative hook point for color change notifications.
 
 ### 2. PlayerCrosshairModeEvent (crosshair mode tracking)
 **File:** `src/Manager.cpp` — `Manager::OnDataLoaded()`

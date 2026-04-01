@@ -29,7 +29,7 @@ namespace ImGui
 
 		void LoadFonts(const Font::FontParams& a_primaryFont, const Font::FontParams& a_secondaryFont);
 
-		ImVec4 GetGameplayHUDColor() const { return hudGameplayColor; }
+		ImVec4 GetGameplayHUDColor();  // lazy load — HUD not ready at init
 		ImVec4 GetSubtitleColor() const { return subtitleColor; }
 
 	private:
@@ -41,6 +41,7 @@ namespace ImGui
 
 		ImVec4 subtitleColor;
 		ImVec4 hudGameplayColor;
+		bool   hudColorLoaded{ false };
 
 		static FontStyles instance;
 	};
