@@ -350,8 +350,12 @@ RE::NiPoint3 Manager::CalculateSubtitleAnchorPos(const RE::SubtitleInfoEx& a_sub
 
 void Manager::Draw()
 {
-	const auto         subtitleManager = RE::SubtitleManager::GetSingleton();
-	RE::BSAutoReadLock locker(subtitleManager->GetRWLock());
+	const auto subtitleManager = RE::SubtitleManager::GetSingleton();
+	// OG: SubtitleManager::RWLock ID unverified — skip to avoid crash on bad pointer
+	std::optional<RE::BSAutoReadLock> locker;
+	if (REL::Module::IsRuntimeNG()) {
+		locker.emplace(subtitleManager->GetRWLock());
+	}
 	{
 		auto& subtitleArray = reinterpret_cast<RE::BSTArray<RE::SubtitleInfoEx>&>(subtitleManager->subtitlePriorityArray);
 		if (subtitleArray.empty()) {
