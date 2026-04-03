@@ -31,9 +31,12 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE 
 
 # ---- Project ----
 
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/version.txt" PROJECT_VER)
+string(STRIP "${PROJECT_VER}" PROJECT_VER)
+
 project(
 	po3_FloatingSubtitlesF4
-	VERSION 1.1.0
+	VERSION ${PROJECT_VER}
 	LANGUAGES CXX
 )
 

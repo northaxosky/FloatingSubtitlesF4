@@ -153,6 +153,9 @@ void Manager::RebuildProcessedSubtitles()
 void Manager::CalculateAlphaModifier(RE::SubtitleInfoEx& a_subInfo) const
 {
 	const auto ref = a_subInfo.speaker.get();
+	if (!ref) {
+		return;
+	}
 	const auto actor = ref->As<RE::Actor>();
 
 	float alpha = 1.0f;
@@ -206,6 +209,9 @@ RE::BSEventNotifyControl Manager::ProcessEvent(const RE::PlayerCrosshairModeEven
 void Manager::CalculateVisibility(RE::SubtitleInfoEx& a_subInfo)
 {
 	const auto ref = a_subInfo.speaker.get();
+	if (!ref) {
+		return;
+	}
 	const auto actor = ref->As<RE::Actor>();
 
 	a_subInfo.setFlag(SubtitleFlag::kOffscreen, false);
@@ -301,7 +307,7 @@ bool Manager::UpdateSubtitleInfo(RE::SubtitleManager* a_manager)
 					if (!gameSubtitleFound) {
 						bool shouldDisplay = false;
 
-						if (RE::MenuTopicManager::GetSingleton()->menuOpen) {
+						if (auto mtm = RE::MenuTopicManager::GetSingleton(); mtm && mtm->menuOpen) {
 							shouldDisplay = ShowDialogueSubtitles();
 						} else {
 							shouldDisplay = ShowGeneralSubtitles();
@@ -346,6 +352,9 @@ RE::NiPoint3 Manager::GetSubtitleAnchorPosImpl(const RE::TESObjectREFRPtr& a_ref
 RE::NiPoint3 Manager::CalculateSubtitleAnchorPos(const RE::SubtitleInfoEx& a_subInfo) const
 {
 	const auto ref = a_subInfo.speaker.get();
+	if (!ref) {
+		return {};
+	}
 	const auto height = ref->GetActorHeightOrRefBound();
 
 	auto pos = GetSubtitleAnchorPosImpl(ref, height);
@@ -376,7 +385,7 @@ void Manager::Draw()
 		for (auto& subInfo : subtitleArray | std::views::reverse) {  // reverse order so closer subtitles get rendered on top
 			if (const auto& ref = subInfo.speaker.get()) {
 				auto actor = ref->As<RE::Actor>();
-				if (!actor) {
+				if (!actor || actor->IsPlayerRef()) {
 					continue;
 				}
 				

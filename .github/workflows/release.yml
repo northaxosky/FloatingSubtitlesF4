@@ -1,0 +1,69 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '*.md'
+      - 'OG_TODO.md'
+      - '.gitignore'
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: echo "version=$(cat version.txt | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: 46a114bc182fdeb162554f255f02a4fba10733b5
+
+      - name: Clone CommonLibF4
+        shell: bash
+        run: git clone https://github.com/Dear-Modding-FO4/commonlibf4.git "${{ runner.temp }}/commonlibf4" --recursive
+
+      - name: Configure CMake
+        shell: bash
+        env:
+          CommonLibF4Path: ${{ runner.temp }}/commonlibf4
+        run: cmake --preset vs2022-windows-vcpkg-f4
+
+      - name: Build
+        run: cmake --build build --config ${{ env.BUILD_TYPE }}
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p staging/F4SE/Plugins
+          cp build/${{ env.BUILD_TYPE }}/po3_FloatingSubtitlesF4.dll staging/F4SE/Plugins/
+          cp build/${{ env.BUILD_TYPE }}/po3_FloatingSubtitlesF4.pdb staging/F4SE/Plugins/
+          cd staging
+          7z a -tzip "../FloatingSubtitlesF4_v${{ steps.version.outputs.version }}.zip" F4SE/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FloatingSubtitlesF4_v${{ steps.version.outputs.version }}
+          path: FloatingSubtitlesF4_v${{ steps.version.outputs.version }}.zip
+
+      - name: Create/update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          files: FloatingSubtitlesF4_v${{ steps.version.outputs.version }}.zip
+          generate_release_notes: true
+          make_latest: true

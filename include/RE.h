@@ -123,7 +123,9 @@ namespace RE
 		void load_global()
 		{
 			if (!global) {
-				global = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(id, "FloatingSubtitles.esp");
+				if (auto handler = RE::TESDataHandler::GetSingleton()) {
+					global = handler->LookupForm<RE::TESGlobal>(id, "FloatingSubtitles.esp");
+				}
 			}
 		}
 	};

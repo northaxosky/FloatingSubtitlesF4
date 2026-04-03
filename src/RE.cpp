@@ -93,16 +93,30 @@ namespace RE
 	{
 		if (auto speakerBase = a_subInfo.topicInfo ? a_subInfo.topicInfo->GetSpeaker() : nullptr) {
 			return speakerBase->GetFullName();
+		}
+
+		// OG: GetDisplayFullName triggers BSResource::EntryDB::Force which can crash
+		// Use safe path only: topicInfo speaker (above) or TESNPC::GetShortName
+		auto speaker = a_subInfo.speaker.get();
+		if (!speaker) {
+			return nullptr;
+		}
+
+		if (REL::Module::IsRuntimeOG()) {
+			if (auto speakerActor = speaker->As<Actor>()) {
+				if (auto speakerNPC = static_cast<TESNPC*>(speakerActor->GetObjectReference())) {
+					return speakerNPC->GetShortName();
+				}
+			}
+			return nullptr;
+		}
+
+		if (!speaker->IsActor() || speaker->extraList && speaker->extraList->HasType<ExtraTextDisplayData>()) {
+			return speaker->GetDisplayFullName();
 		} else {
-			if (auto speaker = a_subInfo.speaker.get()) {
-				if (!speaker->IsActor() || speaker->extraList && speaker->extraList->HasType<ExtraTextDisplayData>()) {
-					return speaker->GetDisplayFullName();
-				} else {
-					if (auto speakerActor = speaker->As<Actor>()) {
-						if (auto speakerNPC = static_cast<TESNPC*>(speakerActor->GetObjectReference())) {
-							return speakerNPC->GetShortName();
-						}
-					}
+			if (auto speakerActor = speaker->As<Actor>()) {
+				if (auto speakerNPC = static_cast<TESNPC*>(speakerActor->GetObjectReference())) {
+					return speakerNPC->GetShortName();
 				}
 			}
 		}
