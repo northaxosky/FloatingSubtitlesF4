@@ -33,7 +33,9 @@ jobs:
 
       - name: Clone CommonLibF4
         shell: bash
-        run: git clone https://github.com/Dear-Modding-FO4/commonlibf4.git "${{ runner.temp }}/commonlibf4" --recursive
+        run: |
+          git clone https://github.com/Dear-Modding-FO4/commonlibf4.git "${{ runner.temp }}/commonlibf4" --recursive
+          cp cmake/commonlibf4-CMakeLists.txt "${{ runner.temp }}/commonlibf4/CMakeLists.txt"
 
       - name: Configure CMake
         shell: bash
