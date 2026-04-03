@@ -125,7 +125,11 @@ void Manager::AddSubtitle(RE::SubtitleManager* a_manager, const char* a_subtitle
 	if (!string::is_empty(a_subtitle) && !string::is_only_space(a_subtitle)) {
 		AddProcessedSubtitle(a_subtitle);
 
-		RE::BSAutoWriteLock gameLocker(a_manager->GetRWLock());
+		// OG: SubtitleManager::RWLock ID unverified — skip to avoid crash
+		std::optional<RE::BSAutoWriteLock> gameLocker;
+		if (REL::Module::IsRuntimeNG()) {
+			gameLocker.emplace(a_manager->GetRWLock());
+		}
 		{
 			auto& subtitleArray = reinterpret_cast<RE::BSTArray<RE::SubtitleInfoEx>&>(a_manager->subtitlePriorityArray);
 			if (!subtitleArray.empty()) {
@@ -243,8 +247,12 @@ void Manager::ClearScaleformSubtitle(RE::BSTValueEventSource<RE::HUDSubtitleDisp
 
 void Manager::ClearScaleformSubtitle()
 {
-	auto                manager = RE::SubtitleManager::GetSingleton();
-	RE::BSAutoWriteLock l(manager->GetRWLock());
+	auto manager = RE::SubtitleManager::GetSingleton();
+	// OG: SubtitleManager::RWLock ID unverified — skip to avoid crash
+	std::optional<RE::BSAutoWriteLock> l;
+	if (REL::Module::IsRuntimeNG()) {
+		l.emplace(manager->GetRWLock());
+	}
 	ClearScaleformSubtitle(manager->subtitleDisplayData, ""sv);
 }
 
