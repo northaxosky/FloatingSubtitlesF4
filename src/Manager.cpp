@@ -88,6 +88,7 @@ bool Manager::ShowDialogueSubtitles() const
 	if (auto collection = RE::INIPrefSettingCollection::GetSingleton()) {
 		if (auto setting = collection->GetSetting("bDialogueSubtitles:Interface")) {
 			return setting->GetBinary();
+		}
 	}
 	return true;
 }
