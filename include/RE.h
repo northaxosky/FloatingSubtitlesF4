@@ -120,11 +120,36 @@ namespace RE
 		T          currentValue{};
 
 	private:
+		static RE::TESForm* GetFormByIDNoLock(RE::TESFormID a_formID)
+		{
+			const auto& [map, lock] = RE::TESForm::GetAllForms();
+			if (map) {
+				const auto it = map->find(a_formID);
+				return it != map->end() ? it->second : nullptr;
+			}
+			return nullptr;
+		}
+
 		void load_global()
 		{
 			if (!global) {
-				if (auto handler = RE::TESDataHandler::GetSingleton()) {
-					global = handler->LookupForm<RE::TESGlobal>(id, "FloatingSubtitles.esp");
+				auto handler = RE::TESDataHandler::GetSingleton();
+				if (!handler) {
+					return;
+				}
+				auto formID = handler->LookupFormID(id, "FloatingSubtitles.esp");
+				if (formID == 0) {
+					return;
+				}
+				RE::TESForm* form = nullptr;
+				if (REL::Module::IsRuntimeOG()) {
+					// OG: GetFormByID lock dereferences null — skip the lock
+					form = GetFormByIDNoLock(formID);
+				} else {
+					form = RE::TESForm::GetFormByID(formID);
+				}
+				if (form && form->Is(RE::TESGlobal::FORM_ID)) {
+					global = form->As<RE::TESGlobal>();
 				}
 			}
 		}
