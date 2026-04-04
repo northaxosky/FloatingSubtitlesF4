@@ -385,7 +385,7 @@ void Manager::Draw()
 		for (auto& subInfo : subtitleArray | std::views::reverse) {  // reverse order so closer subtitles get rendered on top
 			if (const auto& ref = subInfo.speaker.get()) {
 				auto actor = ref->As<RE::Actor>();
-				if (!actor || actor->IsPlayerRef()) {
+				if (!actor) {
 					continue;
 				}
 				
