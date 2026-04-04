@@ -75,16 +75,19 @@ bool Manager::SkipRender() const
 
 bool Manager::ShowGeneralSubtitles() const
 {
-	if (auto setting = RE::INIPrefSettingCollection::GetSingleton()->GetSetting("bGeneralSubtitles:Interface")) {
-		return setting->GetBinary();
+	if (auto collection = RE::INIPrefSettingCollection::GetSingleton()) {
+		if (auto setting = collection->GetSetting("bGeneralSubtitles:Interface")) {
+			return setting->GetBinary();
+		}
 	}
 	return true;
 }
 
 bool Manager::ShowDialogueSubtitles() const
 {
-	if (auto setting = RE::INIPrefSettingCollection::GetSingleton()->GetSetting("bDialogueSubtitles:Interface")) {
-		return setting->GetBinary();
+	if (auto collection = RE::INIPrefSettingCollection::GetSingleton()) {
+		if (auto setting = collection->GetSetting("bDialogueSubtitles:Interface")) {
+			return setting->GetBinary();
 	}
 	return true;
 }
