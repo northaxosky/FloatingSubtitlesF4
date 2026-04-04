@@ -32,6 +32,8 @@ void Manager::LoadGlobalSettings()
 		RebuildProcessedSubtitles();
 	}
 
+	ImGui::FontStyles::GetSingleton()->ReloadColors();
+
 	localizedSubs.PostSettingsLoad();
 }
 

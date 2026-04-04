@@ -8,17 +8,7 @@ namespace ImGui
 	ImVec4 FontStyles::GetGameplayHUDColor()
 	{
 		if (!hudColorLoaded) {
-			if (REL::Module::IsRuntimeNG()) {
-				hudGameplayColor = GetColor(RE::HUDMenuUtils::GetGameplayHUDColor());
-			} else {
-				// OG: read HUD color from INI directly
-				float r = 0.14f, g = 1.0f, b = 0.14f;
-				if (auto s = RE::GetINISetting("iHUDColorR:Interface")) r = static_cast<float>(s->GetInt()) / 255.0f;
-				if (auto s = RE::GetINISetting("iHUDColorG:Interface")) g = static_cast<float>(s->GetInt()) / 255.0f;
-				if (auto s = RE::GetINISetting("iHUDColorB:Interface")) b = static_cast<float>(s->GetInt()) / 255.0f;
-				hudGameplayColor = ImVec4(r, g, b, 1.0f);
-			}
-			hudColorLoaded = true;
+			ReloadColors();
 		}
 		return hudGameplayColor;
 	}
@@ -77,6 +67,23 @@ namespace ImGui
 		subtitleColor.w = 1.0f;
 
 		return RE::BSEventNotifyControl::kContinue;
+	}
+
+	void FontStyles::ReloadColors()
+	{
+		hudGameplayColor = GetColor(RE::HUDMenuUtils::GetGameplayHUDColor());
+		hudColorLoaded = true;
+
+		if (auto setting = RE::GetINISetting("uSubtitleR:Interface")) {
+			subtitleColor.x = static_cast<float>(setting->GetUInt()) / 255.0f;
+		}
+		if (auto setting = RE::GetINISetting("uSubtitleG:Interface")) {
+			subtitleColor.y = static_cast<float>(setting->GetUInt()) / 255.0f;
+		}
+		if (auto setting = RE::GetINISetting("uSubtitleB:Interface")) {
+			subtitleColor.z = static_cast<float>(setting->GetUInt()) / 255.0f;
+		}
+		subtitleColor.w = 1.0f;
 	}
 
 	void FontStyles::Register()

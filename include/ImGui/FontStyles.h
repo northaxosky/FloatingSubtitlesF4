@@ -26,6 +26,7 @@ namespace ImGui
 
 		void Register();
 		void LoadFontStyles();
+		void ReloadColors();
 
 		void LoadFonts(const Font::FontParams& a_primaryFont, const Font::FontParams& a_secondaryFont);
 
