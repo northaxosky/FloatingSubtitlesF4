@@ -185,7 +185,6 @@ void Manager::CalculateAlphaModifier(RE::SubtitleInfoEx& a_subInfo) const
 
 RE::BSEventNotifyControl Manager::ProcessEvent(const RE::MenuOpenCloseEvent& a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 {
-	logger::info("MenuOpenCloseEvent: {} opening={}", a_event.menuName.c_str(), a_event.opening);
 	if (a_event.menuName == "PauseMenu") {
 		if (!a_event.opening) {
 			LoadGlobalSettings();
@@ -197,7 +196,6 @@ RE::BSEventNotifyControl Manager::ProcessEvent(const RE::MenuOpenCloseEvent& a_e
 
 RE::BSEventNotifyControl Manager::ProcessEvent(const RE::TESLoadGameEvent& a_event, RE::BSTEventSource<RE::TESLoadGameEvent>*)
 {
-	logger::info("TESLoadGameEvent fired");
 	LoadGlobalSettings();
 	
 	return RE::BSEventNotifyControl::kContinue;
