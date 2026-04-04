@@ -71,7 +71,9 @@ namespace ImGui
 
 	void FontStyles::ReloadColors()
 	{
-		hudGameplayColor = GetColor(RE::HUDMenuUtils::GetGameplayHUDColor());
+		auto niColor = RE::HUDMenuUtils::GetGameplayHUDColor();
+		logger::info("ReloadColors: NiColor r={:.3f} g={:.3f} b={:.3f}", niColor.red, niColor.green, niColor.blue);
+		hudGameplayColor = GetColor(niColor);
 		hudColorLoaded = true;
 
 		if (auto setting = RE::GetINISetting("uSubtitleR:Interface")) {
