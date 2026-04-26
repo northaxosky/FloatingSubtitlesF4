@@ -17,7 +17,7 @@ public:
 	bool SkipRender() const;
 	void Draw();
 
-	void AddSubtitle(RE::SubtitleManager* a_manager, const char* a_subtitle);
+	void AddSubtitle(RE::SubtitleManager* a_manager, const char* a_subtitle, std::size_t a_preSize);
 	bool UpdateSubtitleInfo(RE::SubtitleManager* a_manager);
 
 private:

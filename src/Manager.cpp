@@ -127,7 +127,7 @@ const DualSubtitle& Manager::GetProcessedSubtitle(const RE::BSFixedStringCS& a_s
 	}
 }
 
-void Manager::AddSubtitle(RE::SubtitleManager* a_manager, const char* a_subtitle)
+void Manager::AddSubtitle(RE::SubtitleManager* a_manager, const char* a_subtitle, std::size_t a_preSize)
 {
 	if (!string::is_empty(a_subtitle) && !string::is_only_space(a_subtitle)) {
 		AddProcessedSubtitle(a_subtitle);
@@ -139,11 +139,20 @@ void Manager::AddSubtitle(RE::SubtitleManager* a_manager, const char* a_subtitle
 		}
 		{
 			auto& subtitleArray = reinterpret_cast<RE::BSTArray<RE::SubtitleInfoEx>&>(a_manager->subtitlePriorityArray);
-			if (!subtitleArray.empty()) {
+			// Only initialize back() if vanilla actually pushed a new entry.
+			// When bGeneralSubtitles/bDialogueSubtitles are off, vanilla
+			// ShowSubtitle returns early without pushing — back() would point
+			// to an unrelated stale entry, and clobbering its plugin-owned
+			// padding bytes (alpha + flags) corrupts subtitle state, which
+			// can lead to crashes in subsequent UpdateSubtitleInfo / Draw
+			// passes. Verify size grew AND text matches as a defensive check.
+			if (subtitleArray.size() > a_preSize && !subtitleArray.empty()) {
 				auto& subInfo = subtitleArray.back();
-				subInfo.flagsRaw() = 0;  // reset any junk values
-				subInfo.setAlphaModifier(0.0f);
-				subInfo.setFlag(SubtitleFlag::kInitialized, true);
+				if (subInfo.subtitleText == a_subtitle) {
+					subInfo.flagsRaw() = 0;  // reset any junk values
+					subInfo.setAlphaModifier(0.0f);
+					subInfo.setFlag(SubtitleFlag::kInitialized, true);
+				}
 			}
 		}
 	}
@@ -272,6 +281,16 @@ void Manager::ClearScaleformSubtitle()
 bool Manager::UpdateSubtitleInfo(RE::SubtitleManager* a_manager)
 {
 	bool gameSubtitleFound = false;
+
+	// OG: SubtitleManager::RWLock ID unverified — skip to avoid crash.
+	// On NG, take the write lock so we don't iterate/mutate the array
+	// concurrently with the audio thread's ShowSubtitle push (the original
+	// AE-only mod took this lock; it was inadvertently dropped during the
+	// OG/NG port).
+	std::optional<RE::BSAutoWriteLock> gameLocker;
+	if (REL::Module::IsRuntimeNG()) {
+		gameLocker.emplace(a_manager->GetRWLock());
+	}
 
 	{
 		auto& subtitleArray = reinterpret_cast<RE::BSTArray<RE::SubtitleInfoEx>&>(a_manager->subtitlePriorityArray);

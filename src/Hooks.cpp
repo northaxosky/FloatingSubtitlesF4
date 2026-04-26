@@ -15,8 +15,15 @@ namespace Hooks
 				logged = true;
 			}
 
+			// Capture array size BEFORE vanilla. When subtitles are disabled in
+			// the INI (bGeneralSubtitles=0 / bDialogueSubtitles=0), vanilla
+			// returns early without pushing — so back() would refer to a stale,
+			// unrelated entry. AddSubtitle uses preSize to detect that.
+			auto& subtitleArray = reinterpret_cast<RE::BSTArray<RE::SubtitleInfoEx>&>(a_manager->subtitlePriorityArray);
+			const auto preSize = subtitleArray.size();
+
 			func(a_manager, speaker, subtitleText, topicInfo, spokenToPlayer);
-			Manager::GetSingleton()->AddSubtitle(a_manager, subtitleText.c_str());
+			Manager::GetSingleton()->AddSubtitle(a_manager, subtitleText.c_str(), preSize);
 		}
 		static inline REL::Relocation<decltype(thunk)> func;
 	};
