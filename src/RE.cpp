@@ -58,10 +58,42 @@ namespace RE
 		return static_cast<float>(quantized) / 16777215.0f;
 	}
 
-	bool IsCrosshairRef([[maybe_unused]] const TESObjectREFRPtr& a_ref)
+	bool IsCrosshairRef(const TESObjectREFRPtr& a_ref)
 	{
-		// ViewCaster is not available in Dear-Modding CommonLibF4
-		return false;
+		// ViewCaster is not declared in Dear-Modding CommonLibF4. Resolve the
+		// singleton + ViewCasterBase::QActivatePickRef directly via per-runtime RVAs.
+		// Singleton is a global ViewCaster* populated by BSTSingletonSDM::InitSDM at startup.
+		//   QActivatePickRef:           OG=0x009DDDF0 NG=0x00940810 AE=0x00993F60
+		//   ViewCaster* singleton ptr:  OG=0x058E2B30 NG=0x02E77AB8 AE=0x030EEEF8
+		// QActivatePickRef is `ObjectRefHandle ViewCasterBase::QActivatePickRef() const`.
+		// MSVC __thiscall x64: rcx = this, rdx = hidden out-ptr to a 4-byte ObjectRefHandle;
+		// returns rax = rdx. Internally takes a read-lock on `this+0x60`.
+		struct RVAs
+		{
+			std::uintptr_t qActivatePickRef;
+			std::uintptr_t singleton;
+		};
+		const auto rvas = []() -> RVAs {
+			if (REL::Module::IsRuntimeOG()) {
+				return { 0x009DDDF0, 0x058E2B30 };
+			} else if (REL::Module::IsRuntimeNG()) {
+				return { 0x00940810, 0x02E77AB8 };
+			} else {
+				return { 0x00993F60, 0x030EEEF8 };
+			}
+		}();
+
+		static const REL::Relocation<void**>                                            singleton{ REL::Offset(rvas.singleton) };
+		static const REL::Relocation<ObjectRefHandle* (*)(void* a_self, ObjectRefHandle*)> qActivatePickRef{ REL::Offset(rvas.qActivatePickRef) };
+
+		auto* vc = *singleton;
+		if (!vc) {
+			return false;
+		}
+
+		ObjectRefHandle handle;
+		qActivatePickRef(vc, &handle);
+		return handle.get() == a_ref;
 	}
 
 	NiAVObject* GetHeadNode(const TESObjectREFRPtr& a_ref)

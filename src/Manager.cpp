@@ -48,12 +48,8 @@ void Manager::OnDataLoaded()
 	logger::info("  RegisterSink TESLoadGameEvent...");
 	RE::TESLoadGameEvent::GetEventSource()->RegisterSink(this);
 
-	if (REL::Module::IsRuntimeNG()) {
-		logger::info("  BuildLocalizedSubtitles...");
-		localizedSubs.BuildLocalizedSubtitles();
-	} else {
-		logger::info("  OG: skipping localized subtitles (ILStringMap not verified)");
-	}
+	logger::info("  BuildLocalizedSubtitles...");
+	localizedSubs.BuildLocalizedSubtitles();
 
 	logger::info("  LoadGlobalSettings...");
 	LoadGlobalSettings();

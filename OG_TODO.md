@@ -29,18 +29,15 @@ Colors load from INI at startup (`iHUDColorR/G/B:Interface` for HUD, `uSubtitleR
 **Root cause:** `ApplyColorUpdateEvent::GetEventSource` crashes on OG via `BSTGlobalEvent`. `HUDMenuUtils::GetGameplayHUDColor()` also crashes — colors read from INI instead.
 **To fix:** Debug `BSTGlobalEvent` event source creation on OG, or find an alternative hook point.
 
-### 2. No dual-language subtitles
-**Impact:** Only the game's native language subtitles are shown.
-**Root cause:** `GetILStringMap()` (OG ID 90497, offset -0x8) crashes — the ID/offset may be wrong or `BSTHashMap` layout differs.
-**To fix:** Use x64dbg on OG, break in `StringFileInfo::ResolveID` (OG RVA 0x1B7E70), inspect RCX at +0x59.
+### 2. ~~No dual-language subtitles~~ — FIXED in 1.1.6
+**Resolved:** OG `ILStringMap` now uses Address Library ID `1497866` (RVA `0x036D9598`) without the `-0x8` indirection used on AE/NG (where the symbol points 8 bytes after a runtime-populated handle slot). RE'd via `StringFileInfo::ResolveID` (RVA `0x001B7E70`) callers of `StringFileInfo::ctor`. See `include/RE.h::GetILStringMap`.
 
 ### 3. No crosshair mode tracking
 **Impact:** Minor — subtitle alpha doesn't change when looking directly at an NPC.
 **Root cause:** `PlayerCrosshairModeEvent` uses same `BSTGlobalEvent` pattern that crashes on OG.
 
-### 4. No crosshair ref highlighting
-**Impact:** Crosshair-targeted NPC subtitle highlighting doesn't work (`IsCrosshairRef` always returns false).
-**Root cause:** `ViewCaster` class doesn't exist in Dear-Modding CommonLibF4.
+### 4. ~~No crosshair ref highlighting~~ — FIXED in 1.1.6
+**Resolved:** `IsCrosshairRef` now resolves the `ViewCaster` singleton + `ViewCasterBase::QActivatePickRef` directly via per-runtime RVAs (no dependency on a `ViewCaster` class declaration). Singleton-pointer RVAs: OG `0x058E2B30`, NG `0x02E77AB8`, AE `0x030EEEF8`. QActivatePickRef RVAs: OG `0x009DDDF0`, NG `0x00940810`, AE `0x00993F60`. See `src/RE.cpp::IsCrosshairRef`.
 
 ## CommonLibF4 Patches (in local clone)
 
