@@ -25,12 +25,16 @@ namespace RE
 	[[nodiscard]] inline static auto GetILStringMap() -> BSTHashMap<BSFixedString, StringFileInfo*>&
 	{
 		using map_t = BSTHashMap<BSFixedString, StringFileInfo*>;
+		// All three runtimes: the Address Library symbol points 0x8 bytes INTO the
+		// BSTScatterTable struct (sentinel ptr lives at struct+0x18, but the symbol
+		// resolves to struct+0x8, presumably for ABI reasons). Subtract 0x8 to get
+		// the real struct base.
+		//   OG  ID 1497866 -> RVA 0x036D9598 (struct base 0x036D9590)
+		//   NG  ID 2661471 -> ...            (verified historically)
+		//   AE  ID 2661471 -> RVA 0x02ED2438 (struct base 0x02ED2430)
 		if (REL::Module::IsRuntimeOG()) {
-			// OG (1.10.163): the symbol points directly at the BSTScatterTable struct
-			// (no -0x8 indirection). Verified by tracing callers of StringFileInfo::ctor:
-			// the .ILSTRINGS-tagged scatter table base is at RVA 0x036D9598.
-			static REL::Relocation<map_t*> map{ REL::ID(1497866) };
-			return *reinterpret_cast<map_t*>(map.address());
+			static REL::Relocation<map_t*> map{ REL::ID(1497866), -0x8 };
+			return *map;
 		}
 		static const REL::ID ilStringMapID{ std::initializer_list<std::uint64_t>{ 90497, 2661471 } };
 		static REL::Relocation<map_t*> map{ ilStringMapID, -0x8 };
